@@ -1,0 +1,296 @@
+/* ===========================================
+   PERSONAGEM PAGE
+=========================================== */
+
+.character-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    color: #fff;
+}
+
+.character-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.character-header p {
+    color: rgba(255,255,255,.75);
+}
+
+/* ===========================================
+   LAYOUT
+=========================================== */
+
+.character-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr 320px;
+    gap: 24px;
+    min-height: 700px;
+}
+
+/* ===========================================
+   PAINÉIS
+=========================================== */
+
+.character-sidebar,
+.character-preview,
+.character-options {
+    background: rgba(20,25,45,.45);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    border: 1px solid rgba(255,255,255,.08);
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 0 30px rgba(0,0,0,.25);
+
+    padding: 24px;
+}
+
+/* ===========================================
+   MENU ESQUERDO
+=========================================== */
+
+.character-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.character-sidebar button {
+
+    background: transparent;
+
+    border: none;
+
+    color: white;
+
+    text-align: left;
+
+    padding: 14px 16px;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    transition: .25s;
+}
+
+.character-sidebar button:hover {
+    background: rgba(255,255,255,.08);
+}
+
+.character-sidebar button.active {
+    background: #7b2ff7;
+}
+
+/* ===========================================
+   PREVIEW
+=========================================== */
+
+.character-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.preview-placeholder {
+
+    width: 100%;
+    height: 620px;
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.04),
+            rgba(255,255,255,.02)
+        );
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+
+    border: 2px dashed rgba(255,255,255,.08);
+}
+
+.preview-placeholder h2 {
+
+    margin-bottom: 10px;
+
+    font-size: 2rem;
+}
+
+.preview-placeholder p {
+
+    color: rgba(255,255,255,.7);
+}
+
+.preview-info {
+
+    margin-top: 30px;
+
+    display: grid;
+
+    gap: 8px;
+
+    text-align: left;
+}
+
+/* ===========================================
+   OPÇÕES
+=========================================== */
+
+.character-options {
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 18px;
+
+    overflow-y: auto;
+}
+
+.character-options h3 {
+
+    font-size: 1rem;
+
+    font-weight: 700;
+
+    color: #fff;
+
+    margin-bottom: -8px;
+}
+
+.character-options select,
+.character-options input[type="color"] {
+
+    width: 100%;
+
+    padding: 12px;
+
+    border-radius: 12px;
+
+    border: 1px solid rgba(255,255,255,.08);
+
+    background: rgba(255,255,255,.08);
+
+    color: white;
+
+    outline: none;
+}
+
+.character-options input[type="color"] {
+
+    height: 55px;
+
+    cursor: pointer;
+}
+
+.character-options select option {
+
+    background: #15172d;
+}
+
+/* ===========================================
+   BOTÃO
+=========================================== */
+
+.save-character {
+
+    margin-top: 20px;
+
+    height: 52px;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7B2FF7,
+            #5B21B6
+        );
+
+    color: white;
+
+    font-size: 1rem;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: .25s;
+}
+
+.save-character:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 30px rgba(123,47,247,.45);
+}
+
+/* ===========================================
+   SCROLL
+=========================================== */
+
+.character-options::-webkit-scrollbar {
+
+    width: 8px;
+}
+
+.character-options::-webkit-scrollbar-thumb {
+
+    background: rgba(255,255,255,.2);
+
+    border-radius: 20px;
+}
+
+/* ===========================================
+   RESPONSIVO
+=========================================== */
+
+@media (max-width:1200px){
+
+    .character-layout{
+
+        grid-template-columns: 200px 1fr;
+    }
+
+    .character-options{
+
+        grid-column: span 2;
+    }
+
+}
+
+@media (max-width:900px){
+
+    .character-layout{
+
+        grid-template-columns:1fr;
+    }
+
+    .character-sidebar,
+    .character-options{
+
+        width:100%;
+    }
+
+    .preview-placeholder{
+
+        height:500px;
+    }
+
+}

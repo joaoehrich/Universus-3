@@ -1,0 +1,195 @@
+/* ===========================
+   TOPBAR
+=========================== */
+
+.topbar {
+    position: relative;
+
+    width: 100%;
+    height: 72px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    flex-shrink: 0;
+
+    padding: 0 30px;
+
+    background: rgba(15, 18, 45, 0.55);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    z-index: 90;
+}
+
+/* ===========================
+   SEARCH
+=========================== */
+
+.topbar-search {
+    width: 420px;
+    max-width: 100%;
+}
+
+.topbar-search input {
+    width: 100%;
+
+    padding: 12px 18px;
+
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+
+    background: rgba(255,255,255,.08);
+
+    color: #fff;
+    outline: none;
+
+    transition: .25s;
+}
+
+.topbar-search input::placeholder {
+    color: rgba(255,255,255,.55);
+}
+
+.topbar-search input:focus {
+    border-color: rgba(246,194,62,.6);
+    background: rgba(255,255,255,.12);
+}
+
+/* ===========================
+   RIGHT
+=========================== */
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* ===========================
+   BOTÃO
+=========================== */
+
+.enter-room-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 12px 20px;
+
+    border-radius: 12px;
+
+    background: #f6c23e;
+
+    color: #222;
+    text-decoration: none;
+    font-weight: 600;
+
+    transition: .2s;
+}
+
+.enter-room-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* ===========================
+   PROFILE
+=========================== */
+
+.profile {
+    position: relative;
+}
+
+.profile-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    background: transparent;
+    border: none;
+
+    color: #fff;
+
+    cursor: pointer;
+}
+
+.profile-button img {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* ===========================
+   MENU
+=========================== */
+
+.profile-menu {
+    position: absolute;
+
+    top: calc(100% + 12px);
+    right: 0;
+
+    width: 220px;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.08);
+
+    background: rgba(20,20,40,.95);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    z-index: 999;
+}
+
+.profile-menu a,
+.profile-menu button {
+    padding: 14px 18px;
+
+    background: transparent;
+    border: none;
+
+    color: #fff;
+    text-decoration: none;
+    text-align: left;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+.profile-menu a:hover,
+.profile-menu button:hover {
+    background: rgba(255,255,255,.08);
+}
+
+.profile-menu hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,.08);
+}
+
+/* ===========================
+   RESPONSIVO
+=========================== */
+
+@media (max-width: 768px) {
+
+    .topbar {
+        padding: 0 20px;
+    }
+
+    .topbar-search {
+        display: none;
+    }
+
+}
