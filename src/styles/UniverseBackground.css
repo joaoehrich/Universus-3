@@ -1,0 +1,99 @@
+.universe-background {
+
+    position: relative;
+
+    width: 100%;
+
+    min-height: 100vh;
+
+    overflow: hidden;
+
+    background:
+    radial-gradient(
+        circle at top,
+        #171738,
+        #050510 70%
+    );
+
+}
+
+
+.stars-layer {
+
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+}
+
+
+.layer-1 {
+    z-index: 1;
+}
+
+.layer-2 {
+    z-index: 2;
+}
+
+.layer-3 {
+    z-index: 3;
+}
+
+
+.nebula {
+
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+}
+
+
+.nebula-1 {
+
+    background:
+    radial-gradient(
+        circle,
+        rgba(90,80,255,0.15),
+        transparent 60%
+    );
+
+}
+
+
+.nebula-2 {
+
+    background:
+    radial-gradient(
+        circle at bottom right,
+        rgba(255,80,180,0.12),
+        transparent 60%
+    );
+
+}
+
+
+.nebula-3 {
+
+    background:
+    radial-gradient(
+        circle at top left,
+        rgba(0,200,255,0.08),
+        transparent 60%
+    );
+
+}
+
+
+.universe-content {
+
+    position: relative;
+
+    z-index: 5;
+
+}

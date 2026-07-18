@@ -1,0 +1,73 @@
+/* Sidebar.css */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 260px;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    background: rgba(15, 18, 45, 0.55);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    border-right: 1px solid rgba(255,255,255,.08);
+
+    z-index: 100;
+}
+
+.sidebar-brand {
+    height: 72px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.4rem;
+    font-weight: 700;
+
+    border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 12px;
+    gap: 8px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 14px 18px;
+
+    color: #fff;
+    text-decoration: none;
+
+    border-radius: 12px;
+
+    transition: .25s;
+}
+
+.sidebar-link:hover {
+    background: rgba(255,255,255,.08);
+}
+
+.sidebar-link.active {
+    background: rgba(123,47,247,.35);
+    border: 1px solid rgba(123,47,247,.7);
+}
+
+.sidebar-link i {
+    width: 20px;
+    text-align: center;
+}
