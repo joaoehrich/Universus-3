@@ -27,9 +27,9 @@ function Sidebar() {
           <span>Criar Quiz</span>
         </NavLink>
 
-        <NavLink to="/dashboard/biblioteca" className="sidebar-link">
+        <NavLink to="/dashboard/pesquisa" className="sidebar-link">
           <i className="fas fa-book"></i>
-          <span>Biblioteca</span>
+          <span>Pesquisa</span>
         </NavLink>
 
         <NavLink to="/dashboard/resultados" className="sidebar-link">

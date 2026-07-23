@@ -13,7 +13,7 @@ import AuthCallback from "./pages/AuthCallback";
 import HomePage from "./pages/HomePage";
 import MeusJogosPage from "./pages/MeusJogosPage";
 import CriarQuizPage from "./pages/CriarQuizPage";
-import BibliotecaPage from "./pages/BibliotecaPage";
+import PesquisaPage from "./pages/PesquisaPage";
 import ResultadosPage from "./pages/ResultadosPage";
 import RankingPage from "./pages/RankingPage";
 import SalasPage from "./pages/SalasPage";
@@ -59,8 +59,8 @@ export const router = createBrowserRouter([
         element: <CriarQuizPage />,
       },
       {
-        path: "biblioteca",
-        element: <BibliotecaPage />,
+        path: "pesquisa",
+        element: <PesquisaPage />,
       },
       {
         path: "resultados",
