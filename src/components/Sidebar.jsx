@@ -28,7 +28,7 @@ function Sidebar() {
         </NavLink>
 
         <NavLink to="/dashboard/pesquisa" className="sidebar-link">
-          <i className="fas fa-book"></i>
+          <i className="fas fa-search"></i>
           <span>Pesquisa</span>
         </NavLink>
 
