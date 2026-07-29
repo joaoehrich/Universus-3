@@ -1,39 +1,82 @@
-import React, { useState, useEffect } from "react";
-import UniverseBackground from "../components/UniverseBackground";
+// src/pages/PesquisaPage.jsx
+
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { supabase } from "../lib/supabaseClient";
+
+// Cores usadas só para dar identidade visual aos cards.
+const CORES = ["#7C3AED", "#2563EB", "#EC4899", "#10B981", "#F59E0B"];
 
 function PesquisaPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [quizzes, setQuizzes] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+
+  const termo = searchParams.get("q") ?? "";
 
   useEffect(() => {
-    // Simulação de dados — substitua pela chamada real à API
-    const data = [
-      { id: 1, titulo: "Quiz de História", descricao: "Descubra fatos históricos incríveis!", cor: "#7C3AED" },
-      { id: 2, titulo: "Quiz de Matemática", descricao: "Desafie-se com números e lógica!", cor: "#2563EB" },
-      { id: 3, titulo: "Quiz de Filmes", descricao: "Você é cinéfilo? Prove!", cor: "#EC4899" },
-      { id: 4, titulo: "Quiz de Ciências", descricao: "Explore o universo do conhecimento!", cor: "#10B981" },
-    ];
-    setQuizzes(data);
-  }, []);
+    let ativo = true;
 
-  const filteredQuizzes = quizzes.filter((quiz) =>
-    quiz.titulo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    async function carregar() {
+      try {
+        setErro("");
+        setCarregando(true);
+
+        let consulta = supabase
+          .from("quizzes")
+          .select(
+            "id, title, description, category, difficulty, qtd_perguntas, access_code, profiles(name)"
+          )
+          .eq("visibilidade", "publico")
+          .order("created_at", { ascending: false })
+          .limit(60);
+
+        if (termo) {
+          consulta = consulta.ilike("title", `%${termo}%`);
+        }
+
+        const { data, error } = await consulta;
+
+        if (error) throw error;
+        if (!ativo) return;
+
+        setQuizzes(data ?? []);
+      } catch (err) {
+        if (ativo) setErro(err.message);
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
+
+    carregar();
+
+    return () => {
+      ativo = false;
+    };
+  }, [termo]);
+
+  function pesquisar(e) {
+    e.preventDefault();
+
+    setSearchParams(searchTerm.trim() ? { q: searchTerm.trim() } : {});
+  }
 
   return (
     <div className="container-fluid position-relative">
-      <UniverseBackground />
-
       {/* Cabeçalho */}
       <div className="mb-5 text-center">
         <h1 className="display-5 fw-bold text-white">Pesquisar Quizzes 🔍</h1>
         <p className="text-light fs-5">
-          Encontre quizzes criados por outros jogadores e desafie seus amigos!
+          Encontre quizzes públicos criados por outros jogadores e desafie seus
+          amigos!
         </p>
       </div>
 
       {/* Campo de pesquisa */}
-      <div className="mb-4 text-center">
+      <form className="mb-4 text-center" onSubmit={pesquisar}>
         <input
           type="text"
           className="form-control w-50 mx-auto"
@@ -46,41 +89,60 @@ function PesquisaPage() {
             fontSize: "1.1rem",
           }}
         />
-      </div>
+      </form>
+
+      {erro && <div className="alert alert-danger">{erro}</div>}
 
       {/* Listagem de quizzes */}
-      <div className="row g-4">
-        {filteredQuizzes.length > 0 ? (
-          filteredQuizzes.map((quiz) => (
-            <div key={quiz.id} className="col-lg-4 col-md-6">
-              <div
-                className="card border-0 shadow-lg h-100"
-                style={{
-                  background: quiz.cor,
-                  color: "#fff",
-                  borderRadius: "20px",
-                }}
-              >
-                <div className="card-body text-center py-5">
-                  <i className="fas fa-question-circle fa-4x mb-4"></i>
-                  <h3>{quiz.titulo}</h3>
-                  <p>{quiz.descricao}</p>
-                  <button
-                    className="btn btn-light mt-3"
-                    style={{ borderRadius: "20px" }}
-                  >
-                    Jogar Quiz
-                  </button>
+      {carregando ? (
+        <p className="text-center text-light">Buscando quizzes...</p>
+      ) : (
+        <div className="row g-4">
+          {quizzes.length > 0 ? (
+            quizzes.map((quiz, indice) => (
+              <div key={quiz.id} className="col-lg-4 col-md-6">
+                <div
+                  className="card border-0 shadow-lg h-100"
+                  style={{
+                    background: CORES[indice % CORES.length],
+                    color: "#fff",
+                    borderRadius: "20px",
+                  }}
+                >
+                  <div className="card-body text-center py-5">
+                    <i className="fas fa-question-circle fa-4x mb-4"></i>
+
+                    <h3>{quiz.title}</h3>
+
+                    <p className="mb-1">
+                      {quiz.description || `Quiz de ${quiz.category}`}
+                    </p>
+
+                    <p className="small mb-1">
+                      {quiz.qtd_perguntas ?? 0} perguntas · {quiz.difficulty}
+                    </p>
+
+                    {quiz.profiles?.name && (
+                      <p className="small mb-0">por {quiz.profiles.name}</p>
+                    )}
+
+                    <button
+                      className="btn btn-light mt-3"
+                      style={{ borderRadius: "20px" }}
+                    >
+                      Jogar Quiz
+                    </button>
+                  </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="text-center text-light">
+              <p>Nenhum quiz encontrado.</p>
             </div>
-          ))
-        ) : (
-          <div className="text-center text-light">
-            <p>Nenhum quiz encontrado.</p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

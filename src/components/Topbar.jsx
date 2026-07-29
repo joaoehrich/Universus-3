@@ -1,20 +1,37 @@
 // src/components/Topbar.jsx
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/Topbar.css";
 
-function Topbar({ onLogout }) {
+function Topbar({ onLogout, perfil }) {
+  const navigate = useNavigate();
+
   const [open, setOpen] = useState(false);
+  const [busca, setBusca] = useState("");
+
+  const nome = perfil?.name ?? "Jogador";
+
+  const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    nome
+  )}&background=7B2FF7&color=fff`;
+
+  function pesquisar(e) {
+    e.preventDefault();
+
+    navigate(`/dashboard/pesquisa?q=${encodeURIComponent(busca.trim())}`);
+  }
 
   return (
     <header className="topbar">
-      <div className="topbar-search">
+      <form className="topbar-search" onSubmit={pesquisar}>
         <input
           type="text"
           placeholder="Pesquisar quizzes..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
         />
-      </div>
+      </form>
 
       <div className="topbar-right">
         <Link
@@ -29,12 +46,9 @@ function Topbar({ onLogout }) {
             className="profile-button"
             onClick={() => setOpen(!open)}
           >
-            <img
-              src="https://ui-avatars.com/api/?name=Universus&background=7B2FF7&color=fff"
-              alt="avatar"
-            />
+            <img src={avatar} alt="avatar" />
 
-            <span>Jogador</span>
+            <span>{nome}</span>
 
             <i className="fas fa-chevron-down"></i>
           </button>

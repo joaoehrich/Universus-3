@@ -1,27 +1,32 @@
 // src/components/Layout.jsx
 
+import { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import UniverseBackground from "./UniverseBackground";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-
+import { supabase } from "../lib/supabaseClient";
+import { usePerfil } from "../hooks/usePerfil";
 
 import "../styles/Layout.css";
 
-// import { supabase } from "../services/supabase";
-
 function Layout() {
   const navigate = useNavigate();
+  const { usuario, perfil, carregando } = usePerfil();
+
+  // Sem sessão não existe dado nenhum para mostrar: volta para o login.
+  useEffect(() => {
+    if (!carregando && !usuario) {
+      navigate("/", { replace: true });
+    }
+  }, [carregando, usuario, navigate]);
 
   async function handleLogout() {
     try {
-      /*
       const { error } = await supabase.auth.signOut();
 
       if (error) throw error;
-      */
 
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error) {
       console.error(error);
     }
@@ -29,16 +34,18 @@ function Layout() {
 
   return (
     <>
-      <UniverseBackground />
-
       <div id="wrapper">
         <Sidebar />
 
         <div id="content-wrapper">
-          <Topbar onLogout={handleLogout} />
+          <Topbar onLogout={handleLogout} perfil={perfil} />
 
           <main className="page-content">
-            <Outlet />
+            {carregando ? (
+              <p className="text-light">Carregando...</p>
+            ) : (
+              <Outlet />
+            )}
           </main>
         </div>
       </div>

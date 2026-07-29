@@ -6,7 +6,6 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
-import UniverseBackground from "../components/UniverseBackground";
 import { supabase } from "../lib/supabaseClient";
 
 
@@ -97,8 +96,6 @@ function CriarContaPage() {
 
   return (
     <>
-      <UniverseBackground />
-
       <div className="container-fluid vh-100 d-flex justify-content-center align-items-center">
         <div
           className="card shadow-lg p-4"
