@@ -1,14 +1,23 @@
 // src/pages/CriarQuizPage.jsx
 
 import { useState } from "react";
+import UploadPdf from "../components/UploadPdf";
+import { supabase } from "../lib/supabaseClient";
+
+const LIMITE_PERGUNTAS = 10;
 
 function CriarQuizPage() {
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+  const [salvando, setSalvando] = useState(false);
+
   const [quiz, setQuiz] = useState({
     titulo: "",
     categoria: "",
     subcategoria: "",
     dificuldade: "Fácil",
     tempo: 30,
+    visibilidade: "privado",
   });
 
   const [perguntas, setPerguntas] = useState([
@@ -37,9 +46,36 @@ function CriarQuizPage() {
     setPerguntas(lista);
   }
 
+  function perguntaVazia(item) {
+    return (
+      !item.pergunta.trim() &&
+      item.alternativas.every((alt) => !alt.trim())
+    );
+  }
+
+  // Recebe as perguntas vindas do PDF. Se o formulário ainda estiver em
+  // branco, substitui; caso contrário, acrescenta ao que já foi digitado.
+  // Devolve quantas couberam dentro do limite de perguntas.
+  function aplicarQuestoesGeradas(questoes) {
+    const atuais = perguntas.every(perguntaVazia) ? [] : perguntas;
+    const vagas = LIMITE_PERGUNTAS - atuais.length;
+    const novas = questoes.slice(0, vagas);
+
+    setPerguntas([
+      ...atuais,
+      ...novas.map((questao) => ({
+        pergunta: questao.pergunta,
+        alternativas: [...questao.alternativas],
+        correta: questao.correta,
+      })),
+    ]);
+
+    return novas.length;
+  }
+
   function adicionarPergunta() {
-    if (perguntas.length >= 10) {
-      alert("Limite máximo de 10 perguntas.");
+    if (perguntas.length >= LIMITE_PERGUNTAS) {
+      alert(`Limite máximo de ${LIMITE_PERGUNTAS} perguntas.`);
       return;
     }
 
@@ -60,15 +96,76 @@ function CriarQuizPage() {
     setPerguntas(lista);
   }
 
-  function salvarQuiz(e) {
+  async function salvarQuiz(e) {
     e.preventDefault();
 
-    console.log({
-      quiz,
-      perguntas,
-    });
+    setErro("");
+    setSucesso("");
 
-    alert("Quiz salvo! (temporário)");
+    const preenchidas = perguntas.filter((item) => !perguntaVazia(item));
+
+    if (preenchidas.length === 0) {
+      setErro("Adicione pelo menos uma pergunta.");
+      return;
+    }
+
+    try {
+      setSalvando(true);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setErro("Sua sessão expirou. Entre novamente para salvar o quiz.");
+        return;
+      }
+
+      // A função criar_quiz_completo grava quiz, perguntas, alternativas e o
+      // vínculo entre eles numa única transação — se algo falhar, nada é salvo.
+      const { data, error } = await supabase.rpc("criar_quiz_completo", {
+        p_titulo: quiz.titulo,
+        p_categoria: quiz.categoria,
+        p_dificuldade: quiz.dificuldade,
+        p_tempo: quiz.tempo,
+        p_perguntas: preenchidas.map((item) => ({
+          pergunta: item.pergunta,
+          alternativas: item.alternativas,
+          correta: item.correta,
+        })),
+        p_descricao: quiz.subcategoria,
+        p_visibilidade: quiz.visibilidade,
+      });
+
+      if (error) throw error;
+
+      const criado = Array.isArray(data) ? data[0] : data;
+
+      setSucesso(
+        `Quiz salvo! Código de acesso: ${criado?.access_code ?? "-"}`
+      );
+
+      setQuiz({
+        titulo: "",
+        categoria: "",
+        subcategoria: "",
+        dificuldade: "Fácil",
+        tempo: 30,
+        visibilidade: "privado",
+      });
+
+      setPerguntas([
+        {
+          pergunta: "",
+          alternativas: ["", "", "", ""],
+          correta: 0,
+        },
+      ]);
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -96,6 +193,12 @@ function CriarQuizPage() {
               <p className="text-light mb-5">
                 Configure seu quiz e adicione as perguntas.
               </p>
+
+              {erro && <div className="alert alert-danger">{erro}</div>}
+
+              {sucesso && (
+                <div className="alert alert-success">{sucesso}</div>
+              )}
 
               <form onSubmit={salvarQuiz}>
                 <div className="row g-3 mb-5">
@@ -213,7 +316,47 @@ function CriarQuizPage() {
                       <option value={60}>60 s</option>
                     </select>
                   </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Visibilidade
+                    </label>
+
+                    <select
+                      className="form-select"
+                      style={{
+                        position: "relative",
+                        zIndex: 9999,
+                      }}
+                      value={quiz.visibilidade}
+                      onChange={(e) =>
+                        setQuiz({
+                          ...quiz,
+                          visibilidade: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="privado">
+                        Privado (só por código)
+                      </option>
+
+                      <option value="publico">
+                        Público (aparece na pesquisa)
+                      </option>
+                    </select>
+                  </div>
                 </div>
+
+                <UploadPdf
+                  dificuldade={quiz.dificuldade}
+                  categoria={quiz.categoria}
+                  onQuestoesGeradas={aplicarQuestoesGeradas}
+                  vagas={
+                    perguntas.every(perguntaVazia)
+                      ? LIMITE_PERGUNTAS
+                      : LIMITE_PERGUNTAS - perguntas.length
+                  }
+                />
 
                 {perguntas.map((item, indice) => (
                   <div
@@ -315,10 +458,10 @@ function CriarQuizPage() {
                     type="button"
                     className="btn btn-outline-light"
                     onClick={adicionarPergunta}
-                    disabled={perguntas.length >= 10}
+                    disabled={perguntas.length >= LIMITE_PERGUNTAS}
                   >
                     ➕ Adicionar Pergunta (
-                    {perguntas.length}/10)
+                    {perguntas.length}/{LIMITE_PERGUNTAS})
                   </button>
                 </div>
 
@@ -331,8 +474,9 @@ function CriarQuizPage() {
                       color: "#fff",
                       border: "none",
                     }}
+                    disabled={salvando}
                   >
-                    Salvar Quiz
+                    {salvando ? "Salvando..." : "Salvar Quiz"}
                   </button>
                 </div>
               </form>

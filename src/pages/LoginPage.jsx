@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import UniverseBackground from "../components/UniverseBackground";
 import { supabase } from "../lib/supabaseClient";
 
 // Descomente quando criar o cliente do Supabase
@@ -74,8 +73,6 @@ function LoginPage() {
 
   return (
     <>
-      <UniverseBackground />
-
       <div className="container vh-100 d-flex justify-content-center align-items-center">
         <div
           className="card shadow-lg p-4"

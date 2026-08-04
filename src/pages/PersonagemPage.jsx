@@ -1,24 +1,71 @@
 // src/pages/PersonagemPage.jsx
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { usePerfil } from "../hooks/usePerfil";
+
+const PADRAO = {
+  gender: "male",
+  skinColor: "#F1C27D",
+  hairColor: "#3D2B1F",
+  hairStyle: "short",
+  face: "oval",
+  nose: "normal",
+  eyes: "normal",
+  beard: "none",
+};
 
 function PersonagemPage() {
-  const [character, setCharacter] = useState({
-    gender: "male",
-    skinColor: "#F1C27D",
-    hairColor: "#3D2B1F",
-    hairStyle: "short",
-    face: "oval",
-    nose: "normal",
-    eyes: "normal",
-    beard: "none",
-  });
+  const { perfil, setPerfil } = usePerfil();
+
+  const [character, setCharacter] = useState(PADRAO);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+
+  // avatar_config é um jsonb no perfil: carrega o que já foi salvo.
+  useEffect(() => {
+    if (!perfil) return;
+
+    const salvo = perfil.avatar_config ?? {};
+
+    setCharacter({ ...PADRAO, ...salvo });
+  }, [perfil]);
 
   function update(field, value) {
+    setSucesso("");
+
     setCharacter((prev) => ({
       ...prev,
       [field]: value,
     }));
+  }
+
+  async function salvarPersonagem() {
+    if (!perfil) return;
+
+    try {
+      setErro("");
+      setSucesso("");
+      setSalvando(true);
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_config: character })
+        .eq("id", perfil.id);
+
+      if (error) throw error;
+
+      setPerfil((atual) =>
+        atual ? { ...atual, avatar_config: character } : atual
+      );
+
+      setSucesso("Personagem salvo!");
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -28,6 +75,10 @@ function PersonagemPage() {
         <p>
           Personalize seu avatar para explorar o universo do jogo.
         </p>
+
+        {erro && <div className="alert alert-danger">{erro}</div>}
+
+        {sucesso && <div className="alert alert-success">{sucesso}</div>}
       </div>
 
       <div className="character-layout">
@@ -159,8 +210,13 @@ function PersonagemPage() {
             <option value="long">Longa</option>
           </select>
 
-          <button className="save-character">
-            Salvar Personagem
+          <button
+            className="save-character"
+            type="button"
+            onClick={salvarPersonagem}
+            disabled={salvando || !perfil}
+          >
+            {salvando ? "Salvando..." : "Salvar Personagem"}
           </button>
 
         </aside>

@@ -1,14 +1,66 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import UniverseBackground from "../components/UniverseBackground";
+import { supabase } from "../lib/supabaseClient";
+import { usePerfil } from "../hooks/usePerfil";
 
 function HomePage() {
+  const { perfil } = usePerfil();
+
+  const [estatisticas, setEstatisticas] = useState({
+    quizzes: 0,
+    partidas: 0,
+    pontos: 0,
+  });
+
+  useEffect(() => {
+    if (!perfil) return;
+
+    let ativo = true;
+
+    async function carregar() {
+      const [quizzes, partidas, tentativas] = await Promise.all([
+        supabase
+          .from("quizzes")
+          .select("id", { count: "exact", head: true })
+          .eq("creator_id", perfil.id),
+
+        supabase
+          .from("quiz_attempts")
+          .select("id", { count: "exact", head: true })
+          .eq("student_id", perfil.id),
+
+        supabase
+          .from("quiz_attempts")
+          .select("score")
+          .eq("student_id", perfil.id),
+      ]);
+
+      if (!ativo) return;
+
+      setEstatisticas({
+        quizzes: quizzes.count ?? 0,
+        partidas: partidas.count ?? 0,
+        pontos: (tentativas.data ?? []).reduce(
+          (total, item) => total + (item.score ?? 0),
+          0
+        ),
+      });
+    }
+
+    carregar();
+
+    return () => {
+      ativo = false;
+    };
+  }, [perfil]);
+
   return (
     <div className="container-fluid">
 
       {/* Cabeçalho */}
       <div className="mb-5">
         <h1 className="display-5 fw-bold text-white">
-          Bem-vindo ao Universus 🚀
+          Bem-vindo ao Universus, {perfil?.name ?? "explorador"} 🚀
         </h1>
 
         <p className="text-light fs-5">
@@ -109,7 +161,7 @@ function HomePage() {
 
             <div className="card-body text-center">
 
-              <h2>12</h2>
+              <h2>{estatisticas.quizzes}</h2>
 
               <p>Quizzes Criados</p>
 
@@ -125,7 +177,7 @@ function HomePage() {
 
             <div className="card-body text-center">
 
-              <h2>57</h2>
+              <h2>{estatisticas.partidas}</h2>
 
               <p>Partidas Jogadas</p>
 
@@ -141,7 +193,7 @@ function HomePage() {
 
             <div className="card-body text-center">
 
-              <h2>8450</h2>
+              <h2>{estatisticas.pontos}</h2>
 
               <p>Pontos</p>
 
@@ -157,7 +209,7 @@ function HomePage() {
 
             <div className="card-body text-center">
 
-              <h2>Lv. 8</h2>
+              <h2>Lv. {perfil?.nivel ?? 1}</h2>
 
               <p>Nível</p>
 
