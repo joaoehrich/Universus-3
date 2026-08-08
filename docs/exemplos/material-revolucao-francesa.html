@@ -1,0 +1,373 @@
+<!doctype html>
+<!--
+  Material de teste para o modo "Gerar com IA" do upload de PDF.
+  Veja docs/UPLOAD-PDF.md, seção 4.
+
+  Como virar PDF: abra este arquivo no navegador, Ctrl+P, destino
+  "Salvar como PDF". Não use "Microsoft Print to PDF" no Windows — ele
+  costuma rasterizar. O PDF do Chrome/Edge sai com camada de texto.
+
+  O conteúdo é denso em datas, nomes e números de propósito: o prompt da
+  Edge Function manda usar só o que está no documento e não repetir
+  assunto entre questões, então material com muitos fatos distintos é o
+  que permite testar as 10 perguntas.
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>A Revolução Francesa (1789–1799)</title>
+
+    <style>
+      @page {
+        size: A4;
+        margin: 2cm;
+      }
+
+      body {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 11.5pt;
+        line-height: 1.55;
+        color: #111;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+
+      h1 {
+        font-size: 20pt;
+        margin-bottom: 0.2rem;
+      }
+
+      h2 {
+        font-size: 14pt;
+        margin-top: 1.8rem;
+        border-bottom: 1px solid #999;
+        padding-bottom: 0.2rem;
+        /* Evita que um título fique sozinho no fim da página impressa. */
+        break-after: avoid;
+      }
+
+      h3 {
+        font-size: 12pt;
+        margin-top: 1.2rem;
+        break-after: avoid;
+      }
+
+      .subtitulo {
+        color: #555;
+        font-style: italic;
+        margin-top: 0;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+        font-size: 10.5pt;
+        break-inside: avoid;
+      }
+
+      th,
+      td {
+        border: 1px solid #999;
+        padding: 0.4rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eee;
+      }
+
+      blockquote {
+        margin: 1rem 0;
+        padding-left: 1rem;
+        border-left: 3px solid #999;
+        font-style: italic;
+        color: #333;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>A Revolução Francesa</h1>
+    <p class="subtitulo">História Geral — Idade Contemporânea — 1789 a 1799</p>
+
+    <h2>1. A França às vésperas de 1789</h2>
+
+    <p>
+      No fim do século XVIII, a França era governada por uma monarquia absolutista
+      sob o rei <strong>Luís XVI</strong>, que assumira o trono em 1774. A
+      sociedade estava organizada em três estamentos rígidos, herdados da estrutura
+      feudal, nos quais a posição de cada pessoa era definida pelo nascimento e não
+      podia ser alterada.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Estamento</th>
+          <th>Quem o compunha</th>
+          <th>Proporção da população</th>
+          <th>Situação</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Primeiro Estado</td>
+          <td>Clero (alto e baixo clero)</td>
+          <td>cerca de 1%</td>
+          <td>Isento de impostos; recebia o dízimo</td>
+        </tr>
+        <tr>
+          <td>Segundo Estado</td>
+          <td>Nobreza</td>
+          <td>cerca de 1,5%</td>
+          <td>Isenta de impostos; detinha cargos e terras</td>
+        </tr>
+        <tr>
+          <td>Terceiro Estado</td>
+          <td>Burguesia, camponeses, artesãos e trabalhadores urbanos</td>
+          <td>cerca de 97%</td>
+          <td>Pagava todos os impostos; sem poder político</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      Dentro do Terceiro Estado havia enorme desigualdade interna. A burguesia
+      concentrava riqueza vinda do comércio e das manufaturas, mas não tinha acesso
+      aos cargos de decisão. Já os trabalhadores urbanos de Paris, chamados de
+      <strong>sans-culottes</strong> — nome derivado do fato de vestirem calças
+      compridas em vez do culote usado pelos nobres —, viviam em situação precária e
+      seriam decisivos nos momentos de maior radicalização.
+    </p>
+
+    <h3>1.1 A crise financeira</h3>
+
+    <p>
+      O Estado francês estava falido. As guerras do século XVIII, os gastos
+      extravagantes da corte de Versalhes e, sobretudo, o apoio militar e financeiro
+      dado à <strong>independência dos Estados Unidos</strong> (1776–1783)
+      esgotaram o tesouro. Em 1788, uma safra desastrosa fez o preço do pão
+      disparar, e o pão representava a maior parte do orçamento de uma família
+      pobre.
+    </p>
+
+    <p>
+      As tentativas de reforma fracassaram justamente porque exigiam que clero e
+      nobreza passassem a pagar impostos — algo que os dois primeiros estamentos
+      recusaram sistematicamente.
+    </p>
+
+    <h3>1.2 A influência do Iluminismo</h3>
+
+    <p>
+      As ideias iluministas forneceram o vocabulário político da revolução.
+      <strong>Montesquieu</strong>, em <em>O Espírito das Leis</em> (1748), defendeu
+      a separação dos poderes em Executivo, Legislativo e Judiciário.
+      <strong>Rousseau</strong>, em <em>O Contrato Social</em> (1762), sustentou que
+      a soberania pertence ao povo e não ao monarca. <strong>Voltaire</strong>
+      atacou os privilégios do clero e defendeu a liberdade de expressão e a
+      tolerância religiosa.
+    </p>
+
+    <h2>2. O ano de 1789</h2>
+
+    <p>
+      Sem saída para a crise fiscal, Luís XVI convocou os
+      <strong>Estados Gerais</strong>, assembleia que reunia representantes dos três
+      estamentos e que não se reunia desde 1614. A abertura ocorreu em
+      <strong>5 de maio de 1789</strong>, em Versalhes.
+    </p>
+
+    <p>
+      O impasse surgiu imediatamente na forma de votação. A tradição mandava votar
+      por estamento — um voto para cada um dos três —, o que garantia sempre 2 a 1
+      a favor do clero e da nobreza. O Terceiro Estado exigia o voto por cabeça, no
+      qual cada representante valeria um voto; como ele tinha o dobro de
+      representantes dos outros dois somados, essa mudança inverteria o resultado.
+    </p>
+
+    <h3>2.1 Da Assembleia Nacional à Bastilha</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Acontecimento</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>17 de junho de 1789</td>
+          <td>
+            O Terceiro Estado rompe com os Estados Gerais e se autoproclama
+            Assembleia Nacional
+          </td>
+        </tr>
+        <tr>
+          <td>20 de junho de 1789</td>
+          <td>
+            Juramento do Jogo da Péla: os deputados juram não se dispersar até dar
+            uma Constituição à França
+          </td>
+        </tr>
+        <tr>
+          <td>14 de julho de 1789</td>
+          <td>
+            Queda da Bastilha: a população de Paris toma a prisão-fortaleza,
+            símbolo do absolutismo
+          </td>
+        </tr>
+        <tr>
+          <td>4 de agosto de 1789</td>
+          <td>Abolição dos privilégios feudais e dos direitos senhoriais</td>
+        </tr>
+        <tr>
+          <td>26 de agosto de 1789</td>
+          <td>Aprovação da Declaração dos Direitos do Homem e do Cidadão</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      A <strong>Queda da Bastilha</strong>, em 14 de julho de 1789, tem valor mais
+      simbólico que militar: a fortaleza guardava apenas sete prisioneiros no dia da
+      tomada. Sua importância está em mostrar que o povo armado podia derrotar uma
+      posição do rei. A data é hoje o feriado nacional da França.
+    </p>
+
+    <p>
+      A <strong>Declaração dos Direitos do Homem e do Cidadão</strong>, de 26 de
+      agosto de 1789, estabeleceu a igualdade jurídica, a liberdade individual, o
+      direito à propriedade e a soberania da nação. Seu primeiro artigo afirma:
+    </p>
+
+    <blockquote>
+      "Os homens nascem e permanecem livres e iguais em direitos."
+    </blockquote>
+
+    <p>
+      O documento, porém, não estendeu direitos políticos às mulheres. Em 1791,
+      <strong>Olympe de Gouges</strong> publicou a <em>Declaração dos Direitos da
+      Mulher e da Cidadã</em> em resposta a essa exclusão; ela seria guilhotinada em
+      1793.
+    </p>
+
+    <h2>3. As fases da Revolução</h2>
+
+    <h3>3.1 Monarquia Constitucional (1789–1792)</h3>
+
+    <p>
+      A Assembleia Nacional Constituinte promulgou em <strong>1791</strong> a
+      primeira Constituição francesa, que manteve o rei no trono, mas com poderes
+      limitados, e instituiu o voto censitário — apenas os homens com determinada
+      renda podiam votar.
+    </p>
+
+    <p>
+      Em junho de 1791, Luís XVI tentou fugir do país com a família para se juntar
+      às forças contrarrevolucionárias. Foi reconhecido e detido na cidade de
+      <strong>Varennes</strong>. O episódio destruiu a confiança que restava na
+      monarquia e fortaleceu os grupos republicanos.
+    </p>
+
+    <h3>3.2 Convenção Nacional (1792–1795)</h3>
+
+    <p>
+      Em <strong>setembro de 1792</strong>, a Convenção Nacional proclamou a
+      República e aboliu a monarquia. Luís XVI foi julgado por traição e
+      guilhotinado em <strong>21 de janeiro de 1793</strong>; Maria Antonieta foi
+      executada em outubro do mesmo ano.
+    </p>
+
+    <p>Dentro da Convenção, dois grupos disputavam o rumo da revolução:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Girondinos</th>
+          <th>Jacobinos (montanheses)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Base social</td>
+          <td>Alta burguesia</td>
+          <td>Pequena burguesia e sans-culottes</td>
+        </tr>
+        <tr>
+          <td>Posição</td>
+          <td>Moderada; queriam encerrar a revolução</td>
+          <td>Radical; queriam aprofundá-la</td>
+        </tr>
+        <tr>
+          <td>Principal liderança</td>
+          <td>Brissot</td>
+          <td>Robespierre, Danton, Marat</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      Com a vitória dos jacobinos, iniciou-se em 1793 o período conhecido como
+      <strong>o Terror</strong>. O Comitê de Salvação Pública, sob o comando de
+      <strong>Maximilien Robespierre</strong>, concentrou poderes excepcionais para
+      enfrentar as revoltas internas e a guerra contra as monarquias europeias.
+      Estima-se que cerca de <strong>17 mil pessoas</strong> tenham sido executadas
+      por decisão dos tribunais revolucionários entre 1793 e 1794.
+    </p>
+
+    <p>
+      No mesmo período, a Convenção aprovou a Lei do Máximo Geral, que tabelou o
+      preço dos alimentos e dos salários, e decretou a abolição da escravidão nas
+      colônias francesas, em fevereiro de 1794.
+    </p>
+
+    <p>
+      Em <strong>28 de julho de 1794</strong> — o 9 Termidor do calendário
+      revolucionário —, Robespierre foi deposto e guilhotinado, encerrando o Terror.
+    </p>
+
+    <h3>3.3 Diretório (1795–1799)</h3>
+
+    <p>
+      O poder passou a um colegiado de cinco diretores, apoiado pela alta burguesia.
+      O período foi marcado por instabilidade, corrupção e pressão simultânea de
+      monarquistas e de jacobinos remanescentes. Foi também quando ganhou projeção o
+      general <strong>Napoleão Bonaparte</strong>, vitorioso nas campanhas da Itália
+      e do Egito.
+    </p>
+
+    <p>
+      Em <strong>9 de novembro de 1799</strong> — o 18 Brumário —, Napoleão liderou
+      um golpe de Estado que dissolveu o Diretório e instituiu o Consulado. A data é
+      geralmente adotada como marco do fim da Revolução Francesa.
+    </p>
+
+    <h2>4. Legado</h2>
+
+    <p>
+      A Revolução Francesa encerrou o Antigo Regime na França e difundiu pela Europa
+      e pelas Américas os princípios expressos no lema
+      <strong>"Liberdade, Igualdade, Fraternidade"</strong>. Entre suas
+      consequências duradouras estão a noção de cidadania fundada na igualdade
+      perante a lei, a separação entre Estado e Igreja, a ideia moderna de
+      Constituição como limite ao poder e a adoção do sistema métrico decimal,
+      criado nesse período.
+    </p>
+
+    <p>
+      Historiadores costumam apontar que a revolução atendeu principalmente aos
+      interesses da burguesia: o voto censitário, a defesa intransigente da
+      propriedade privada e a repressão às organizações de trabalhadores mostram que
+      a igualdade proclamada era jurídica, não econômica. Ainda assim, o repertório
+      político criado entre 1789 e 1799 — direitos do cidadão, soberania popular,
+      constituição escrita — tornou-se referência para movimentos posteriores em
+      todo o mundo, incluindo a Inconfidência Mineira e a Revolução Pernambucana de
+      1817, no Brasil.
+    </p>
+  </body>
+</html>

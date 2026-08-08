@@ -1,18 +1,26 @@
 // src/pages/PesquisaPage.jsx
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import { usePerfil } from "../hooks/usePerfil";
+import { criarSala } from "../lib/partida";
 
 // Cores usadas só para dar identidade visual aos cards.
 const CORES = ["#7C3AED", "#2563EB", "#EC4899", "#10B981", "#F59E0B"];
 
 function PesquisaPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { perfil } = usePerfil();
+
+  // Quem abre a sala e o professor. O aluno entra pelo codigo.
+  const ehProfessor = perfil?.role === "professor";
 
   const [quizzes, setQuizzes] = useState([]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
   const [carregando, setCarregando] = useState(true);
+  const [abrindo, setAbrindo] = useState(null);
   const [erro, setErro] = useState("");
 
   const termo = searchParams.get("q") ?? "";
@@ -62,6 +70,21 @@ function PesquisaPage() {
     e.preventDefault();
 
     setSearchParams(searchTerm.trim() ? { q: searchTerm.trim() } : {});
+  }
+
+  // Abre uma sala ao vivo desse quiz e leva quem clicou para o controle.
+  async function abrirSala(quiz) {
+    try {
+      setErro("");
+      setAbrindo(quiz.id);
+
+      const sala = await criarSala(quiz.id);
+
+      navigate(`/dashboard/sala/${sala.codigo}`);
+    } catch (err) {
+      setErro(err.message);
+      setAbrindo(null);
+    }
   }
 
   return (
@@ -126,12 +149,22 @@ function PesquisaPage() {
                       <p className="small mb-0">por {quiz.profiles.name}</p>
                     )}
 
-                    <button
-                      className="btn btn-light mt-3"
-                      style={{ borderRadius: "20px" }}
-                    >
-                      Jogar Quiz
-                    </button>
+                    {ehProfessor ? (
+                      <button
+                        className="btn btn-light mt-3"
+                        style={{ borderRadius: "20px" }}
+                        disabled={abrindo === quiz.id}
+                        onClick={() => abrirSala(quiz)}
+                      >
+                        {abrindo === quiz.id
+                          ? "Abrindo sala..."
+                          : "🚀 Abrir sala"}
+                      </button>
+                    ) : (
+                      <p className="small mb-0 mt-3 opacity-75">
+                        Peça o código ao seu professor para jogar.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -10,9 +10,13 @@
 // nunca no front-end:
 //   Project Settings > Edge Functions > Secrets > GEMINI_API_KEY
 
-// Modelo do plano gratuito. Se o Google mudar a disponibilidade, troque aqui
-// pelo nome listado em https://aistudio.google.com/ (ex.: gemini-2.0-flash).
-const MODELO = "gemini-2.5-flash";
+// O Google fecha modelos antigos para projetos novos: o `gemini-2.5-flash`
+// passou a responder "no longer available to new users" para chaves recentes.
+// Quando isso acontecer de novo, basta criar/editar o secret GEMINI_MODELO em
+// Project Settings > Edge Functions > Secrets com um nome da lista de
+// https://ai.google.dev/gemini-api/docs/models — sem mexer no código nem
+// redeployar a função.
+const MODELO = Deno.env.get("GEMINI_MODELO") || "gemini-3.6-flash";
 
 const ENDPOINT =
   `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`;
@@ -26,9 +30,17 @@ const CORS = {
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB de PDF
 
+// A plataforma tem um teto de tempo por invocação; bater nele derruba a
+// conexão sem corpo de resposta, e o front não tem como explicar o que houve.
+// Desistir do Gemini antes disso permite devolver um erro legível. Fica abaixo
+// do limite do cliente (120 s em `src/lib/gerarQuestoes.js`) para que esta
+// resposta chegue antes de ele desistir.
+const TEMPO_LIMITE_MS = 90_000;
+
 interface Requisicao {
   pdfBase64?: string;
   quantidade?: number;
+  alternativas?: number;
   dificuldade?: string;
   categoria?: string;
 }
@@ -67,9 +79,9 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-// A resposta do modelo é validada aqui: o formulário do quiz só aceita
-// 4 alternativas preenchidas e um índice de 0 a 3.
-function ehQuestaoValida(valor: unknown): valor is Questao {
+// A resposta do modelo é validada aqui: o formulário do quiz aceita de 2 a 5
+// alternativas (A–E), todas preenchidas, e um índice dentro dessa faixa.
+function ehQuestaoValida(valor: unknown, total: number): valor is Questao {
   if (typeof valor !== "object" || valor === null) return false;
 
   const { pergunta, alternativas, correta } = valor as Record<string, unknown>;
@@ -78,14 +90,14 @@ function ehQuestaoValida(valor: unknown): valor is Questao {
     typeof pergunta === "string" &&
     pergunta.trim().length > 0 &&
     Array.isArray(alternativas) &&
-    alternativas.length === 4 &&
+    alternativas.length === total &&
     alternativas.every(
       (alt) => typeof alt === "string" && alt.trim().length > 0,
     ) &&
     typeof correta === "number" &&
     Number.isInteger(correta) &&
     correta >= 0 &&
-    correta <= 3
+    correta < total
   );
 }
 
@@ -118,6 +130,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const {
     pdfBase64,
     quantidade = 5,
+    alternativas = 5,
     dificuldade = "Médio",
     categoria = "",
   } = corpo ?? {};
@@ -133,14 +146,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const total = Math.min(Math.max(Number(quantidade) || 5, 1), 10);
 
+  // O formulário mostra 5 campos (A–E), mas aceita menos. Quem chama decide.
+  const porQuestao = Math.min(Math.max(Number(alternativas) || 5, 2), 5);
+
   const instrucoes = [
     `Gere exatamente ${total} questões de múltipla escolha em português do Brasil`,
     "com base no conteúdo do PDF anexado.",
     "",
     "Regras:",
-    "- Cada questão tem exatamente 4 alternativas.",
-    "- Apenas uma alternativa é correta; as outras três devem ser plausíveis, mas erradas.",
-    '- O campo "correta" é o índice (0 a 3) da alternativa correta.',
+    `- Cada questão tem exatamente ${porQuestao} alternativas.`,
+    `- Apenas uma alternativa é correta; as outras ${porQuestao - 1} devem ser plausíveis, mas erradas.`,
+    `- O campo "correta" é o índice (0 a ${porQuestao - 1}) da alternativa correta.`,
     "- Use somente informações presentes no documento. Não invente dados.",
     '- Não numere as alternativas (nada de "a)", "1." etc.) — apenas o texto.',
     "- Não repita o mesmo assunto em duas questões.",
@@ -176,6 +192,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           responseSchema: SCHEMA,
         },
       }),
+      signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
     });
 
     const dados = await resposta.json();
@@ -206,7 +223,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const conteudo = JSON.parse(texto) as { questoes?: unknown };
     const geradas = Array.isArray(conteudo.questoes) ? conteudo.questoes : [];
-    const validas = geradas.filter(ehQuestaoValida);
+    // Lambda explícita: passar a função direto faria o `filter` mandar o
+    // índice do array como segundo argumento no lugar do total esperado.
+    const validas = geradas.filter((questao) =>
+      ehQuestaoValida(questao, porQuestao)
+    );
 
     if (validas.length === 0) {
       return json(
@@ -218,6 +239,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ questoes: validas.slice(0, total) });
   } catch (err) {
     console.error("Erro ao gerar questões:", err);
+
+    // `AbortSignal.timeout` rejeita o fetch com um DOMException "TimeoutError".
+    if (err instanceof Error && err.name === "TimeoutError") {
+      return json(
+        {
+          erro:
+            "O Gemini passou de 90 segundos sem responder. Tente um PDF com menos páginas ou peça menos perguntas.",
+        },
+        504,
+      );
+    }
 
     return json(
       {

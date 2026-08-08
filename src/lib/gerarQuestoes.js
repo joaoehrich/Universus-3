@@ -1,8 +1,16 @@
 // src/lib/gerarQuestoes.js
 
 import { supabase } from "./supabaseClient";
+import { conferirAssinaturaPdf } from "./arquivoPdf";
 
 export const TAMANHO_MAXIMO_PDF = 10 * 1024 * 1024; // 10 MB
+
+// Teto para a chamada inteira. A Edge Function desiste do Gemini antes disso
+// (90 s, em `supabase/functions/gerar-questoes/index.ts`) e responde com uma
+// mensagem própria; este limite cobre o caso de ela não responder nada. Sem
+// ele o botão fica em "Gerando..." até a plataforma derrubar a conexão, sem
+// nenhum aviso ao professor.
+export const TEMPO_LIMITE_MS = 120_000;
 
 // O FileReader devolve "data:application/pdf;base64,XXXX" — a API precisa
 // apenas da parte depois da vírgula.
@@ -42,6 +50,14 @@ export function validarPdf(arquivo) {
 async function descreverErro(error) {
   const resposta = error.context;
 
+  // Estouro do `timeout` do invoke: o fetch é abortado e chega aqui como
+  // FunctionsFetchError com um AbortError dentro, sem nenhuma resposta HTTP.
+  // Precisa vir antes da checagem abaixo, senão vira "verifique se a função
+  // está publicada" — que manda o professor procurar no lugar errado.
+  if (resposta?.name === "AbortError" || resposta?.name === "TimeoutError") {
+    return "A geração passou de 2 minutos e foi cancelada. Tente um PDF menor, com menos páginas, ou peça menos perguntas.";
+  }
+
   // Sem status HTTP o navegador bloqueou antes de receber resposta. O caso
   // mais comum não é falta de internet: quando a função não está publicada,
   // o preflight OPTIONS recebe 404 sem cabeçalhos CORS e o POST nem chega a
@@ -75,10 +91,11 @@ async function descreverErro(error) {
 export async function gerarQuestoesDoPdf({
   arquivo,
   quantidade = 5,
+  alternativas = 5,
   dificuldade = "Médio",
   categoria = "",
 }) {
-  const problema = validarPdf(arquivo);
+  const problema = validarPdf(arquivo) || (await conferirAssinaturaPdf(arquivo));
 
   if (problema) {
     throw new Error(problema);
@@ -90,9 +107,11 @@ export async function gerarQuestoesDoPdf({
     body: {
       pdfBase64,
       quantidade,
+      alternativas,
       dificuldade,
       categoria,
     },
+    timeout: TEMPO_LIMITE_MS,
   });
 
   if (error) {

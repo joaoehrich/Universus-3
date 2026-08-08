@@ -6,10 +6,13 @@ import { usePerfil } from "../hooks/usePerfil";
 function HomePage() {
   const { perfil } = usePerfil();
 
+  const ehProfessor = perfil?.role === "professor";
+
   const [estatisticas, setEstatisticas] = useState({
     quizzes: 0,
     partidas: 0,
     pontos: 0,
+    aproveitamento: null,
   });
 
   useEffect(() => {
@@ -31,19 +34,34 @@ function HomePage() {
 
         supabase
           .from("quiz_attempts")
-          .select("score")
+          .select("score, correct_answers, total_questions")
           .eq("student_id", perfil.id),
       ]);
 
       if (!ativo) return;
 
+      const historico = tentativas.data ?? [];
+
+      // Aproveitamento geral: acertos sobre perguntas respondidas em todas
+      // as partidas. Sem partida nenhuma fica null, para a tela mostrar "-".
+      const acertos = historico.reduce(
+        (total, item) => total + (item.correct_answers ?? 0),
+        0
+      );
+
+      const questoes = historico.reduce(
+        (total, item) => total + (item.total_questions ?? 0),
+        0
+      );
+
       setEstatisticas({
         quizzes: quizzes.count ?? 0,
         partidas: partidas.count ?? 0,
-        pontos: (tentativas.data ?? []).reduce(
+        pontos: historico.reduce(
           (total, item) => total + (item.score ?? 0),
           0
         ),
+        aproveitamento: questoes > 0 ? Math.round((acertos / questoes) * 100) : null,
       });
     }
 
@@ -73,7 +91,7 @@ function HomePage() {
 
         <div className="col-lg-4 col-md-6">
           <Link
-            to="/dashboard/criar-quiz"
+            to={ehProfessor ? "/dashboard/criar-quiz" : "/dashboard/resultados"}
             className="text-decoration-none"
           >
             <div
@@ -85,12 +103,18 @@ function HomePage() {
               }}
             >
               <div className="card-body text-center py-5">
-                <i className="fas fa-plus-circle fa-4x mb-4"></i>
+                <i
+                  className={`fas ${
+                    ehProfessor ? "fa-plus-circle" : "fa-chart-line"
+                  } fa-4x mb-4`}
+                ></i>
 
-                <h3>Criar Quiz</h3>
+                <h3>{ehProfessor ? "Criar Quiz" : "Meus Resultados"}</h3>
 
                 <p>
-                  Crie um novo jogo para sua turma.
+                  {ehProfessor
+                    ? "Crie um novo jogo para sua turma."
+                    : "Veja suas partidas, acertos e evolução."}
                 </p>
               </div>
             </div>
@@ -161,9 +185,15 @@ function HomePage() {
 
             <div className="card-body text-center">
 
-              <h2>{estatisticas.quizzes}</h2>
+              <h2>
+                {ehProfessor
+                  ? estatisticas.quizzes
+                  : estatisticas.aproveitamento === null
+                  ? "–"
+                  : `${estatisticas.aproveitamento}%`}
+              </h2>
 
-              <p>Quizzes Criados</p>
+              <p>{ehProfessor ? "Quizzes Criados" : "Aproveitamento"}</p>
 
             </div>
 

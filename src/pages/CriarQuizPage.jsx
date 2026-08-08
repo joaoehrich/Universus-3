@@ -6,6 +6,24 @@ import { supabase } from "../lib/supabaseClient";
 
 const LIMITE_PERGUNTAS = 10;
 
+// A, B, C, D, E. O banco guarda alternativas como linhas, então o número
+// aqui é só o teto do formulário; as que ficarem em branco são descartadas
+// na hora de salvar.
+const MAX_ALTERNATIVAS = 5;
+
+const LETRAS = ["A", "B", "C", "D", "E"];
+
+function perguntaEmBranco() {
+  return {
+    pergunta: "",
+    // `correta` começa nula de propósito: marcar a letra A por padrão faria
+    // um quiz salvar com gabarito errado quando o professor esquecesse de
+    // escolher. Sem resposta, o salvamento avisa em vez de aceitar calado.
+    alternativas: Array(MAX_ALTERNATIVAS).fill(""),
+    correta: null,
+  };
+}
+
 function CriarQuizPage() {
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -20,13 +38,7 @@ function CriarQuizPage() {
     visibilidade: "privado",
   });
 
-  const [perguntas, setPerguntas] = useState([
-    {
-      pergunta: "",
-      alternativas: ["", "", "", ""],
-      correta: 0,
-    },
-  ]);
+  const [perguntas, setPerguntas] = useState([perguntaEmBranco()]);
 
   function atualizarPergunta(index, valor) {
     const lista = [...perguntas];
@@ -53,6 +65,54 @@ function CriarQuizPage() {
     );
   }
 
+  // Deixa as perguntas prontas para o banco: descarta alternativas em branco
+  // (o formulário sempre mostra 5 campos, mas a questão pode usar só 3) e
+  // recalcula o índice da correta, que muda quando um campo do meio some.
+  function prepararPerguntas(lista) {
+    const prontas = [];
+    const erros = [];
+
+    lista.forEach((item, indice) => {
+      const numero = indice + 1;
+      const alternativas = [];
+
+      let correta = -1;
+
+      item.alternativas.forEach((alt, i) => {
+        if (!alt.trim()) return;
+
+        if (i === item.correta) {
+          correta = alternativas.length;
+        }
+
+        alternativas.push(alt.trim());
+      });
+
+      if (!item.pergunta.trim()) {
+        erros.push(`Pergunta ${numero}: falta o enunciado.`);
+        return;
+      }
+
+      if (alternativas.length < 2) {
+        erros.push(`Pergunta ${numero}: preencha pelo menos 2 alternativas.`);
+        return;
+      }
+
+      if (correta === -1) {
+        erros.push(`Pergunta ${numero}: marque qual alternativa é a correta.`);
+        return;
+      }
+
+      prontas.push({
+        pergunta: item.pergunta.trim(),
+        alternativas,
+        correta,
+      });
+    });
+
+    return { prontas, erros };
+  }
+
   // Recebe as perguntas vindas do PDF. Se o formulário ainda estiver em
   // branco, substitui; caso contrário, acrescenta ao que já foi digitado.
   // Devolve quantas couberam dentro do limite de perguntas.
@@ -63,11 +123,23 @@ function CriarQuizPage() {
 
     setPerguntas([
       ...atuais,
-      ...novas.map((questao) => ({
-        pergunta: questao.pergunta,
-        alternativas: [...questao.alternativas],
-        correta: questao.correta,
-      })),
+      ...novas.map((questao) => {
+        // O PDF pode trazer menos de 5 alternativas; o restante fica em
+        // branco para o professor completar ou deixar de fora.
+        const alternativas = Array(MAX_ALTERNATIVAS).fill("");
+
+        questao.alternativas
+          .slice(0, MAX_ALTERNATIVAS)
+          .forEach((texto, i) => {
+            alternativas[i] = texto;
+          });
+
+        return {
+          pergunta: questao.pergunta,
+          alternativas,
+          correta: questao.correta,
+        };
+      }),
     ]);
 
     return novas.length;
@@ -79,14 +151,7 @@ function CriarQuizPage() {
       return;
     }
 
-    setPerguntas([
-      ...perguntas,
-      {
-        pergunta: "",
-        alternativas: ["", "", "", ""],
-        correta: 0,
-      },
-    ]);
+    setPerguntas([...perguntas, perguntaEmBranco()]);
   }
 
   function removerPergunta(index) {
@@ -109,6 +174,15 @@ function CriarQuizPage() {
       return;
     }
 
+    const { prontas, erros } = prepararPerguntas(preenchidas);
+
+    // Salvar pela metade deixaria o quiz com perguntas sem gabarito, que
+    // quebram a partida na hora de pontuar. Melhor recusar e apontar onde.
+    if (erros.length > 0) {
+      setErro(erros.join(" "));
+      return;
+    }
+
     try {
       setSalvando(true);
 
@@ -128,11 +202,7 @@ function CriarQuizPage() {
         p_categoria: quiz.categoria,
         p_dificuldade: quiz.dificuldade,
         p_tempo: quiz.tempo,
-        p_perguntas: preenchidas.map((item) => ({
-          pergunta: item.pergunta,
-          alternativas: item.alternativas,
-          correta: item.correta,
-        })),
+        p_perguntas: prontas,
         p_descricao: quiz.subcategoria,
         p_visibilidade: quiz.visibilidade,
       });
@@ -154,13 +224,7 @@ function CriarQuizPage() {
         visibilidade: "privado",
       });
 
-      setPerguntas([
-        {
-          pergunta: "",
-          alternativas: ["", "", "", ""],
-          correta: 0,
-        },
-      ]);
+      setPerguntas([perguntaEmBranco()]);
     } catch (err) {
       setErro(err.message);
     } finally {
@@ -422,22 +486,26 @@ function CriarQuizPage() {
                             >
                               <input
                                 type="radio"
+                                name={`correta-${indice}`}
                                 checked={item.correta === i}
                                 onChange={() =>
                                   definirCorreta(indice, i)
                                 }
                               />
 
+                              <strong>{LETRAS[i]}</strong>
+
                               {item.correta === i
-                                ? "✅ Resposta Correta"
-                                : "⬜ Marcar Correta"}
+                                ? "✅ Correta"
+                                : "⬜ Marcar"}
                             </label>
                           </div>
 
                           <input
                             className="form-control"
-                            placeholder={`Alternativa ${i + 1
-                              }`}
+                            placeholder={`Alternativa ${LETRAS[i]}${
+                              i >= 2 ? " (opcional)" : ""
+                            }`}
                             value={alt}
                             onChange={(e) =>
                               atualizarAlternativa(

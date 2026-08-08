@@ -1,9 +1,17 @@
 // src/components/Sidebar.jsx
 
 import { Link, NavLink } from "react-router-dom";
+import { usePerfil } from "../hooks/usePerfil";
 import "../styles/Sidebar.css";
 
 function Sidebar() {
+  const { perfil } = usePerfil();
+
+  // Criar quiz, abrir sala e a lista de quizzes criados sao do professor.
+  // Enquanto o perfil nao carrega, trata como aluno: e melhor o professor
+  // ver o menu completar do que o aluno ver o menu do professor piscar.
+  const ehProfessor = perfil?.role === "professor";
+
   return (
     <aside className="sidebar">
       <Link className="sidebar-brand" to="/dashboard">
@@ -17,15 +25,19 @@ function Sidebar() {
           <span>Início</span>
         </NavLink>
 
-        <NavLink to="/dashboard/jogos" className="sidebar-link">
-          <i className="fas fa-gamepad"></i>
-          <span>Meus Jogos</span>
-        </NavLink>
+        {ehProfessor && (
+          <NavLink to="/dashboard/jogos" className="sidebar-link">
+            <i className="fas fa-gamepad"></i>
+            <span>Meus Jogos</span>
+          </NavLink>
+        )}
 
-        <NavLink to="/dashboard/criar-quiz" className="sidebar-link">
-          <i className="fas fa-plus-circle"></i>
-          <span>Criar Quiz</span>
-        </NavLink>
+        {ehProfessor && (
+          <NavLink to="/dashboard/criar-quiz" className="sidebar-link">
+            <i className="fas fa-plus-circle"></i>
+            <span>Criar Quiz</span>
+          </NavLink>
+        )}
 
         <NavLink to="/dashboard/pesquisa" className="sidebar-link">
           <i className="fas fa-search"></i>
@@ -34,17 +46,31 @@ function Sidebar() {
 
         <NavLink to="/dashboard/resultados" className="sidebar-link">
           <i className="fas fa-chart-line"></i>
-          <span>Resultados</span>
+          <span>{ehProfessor ? "Resultados" : "Meus Resultados"}</span>
         </NavLink>
+
+        {!ehProfessor && (
+          <NavLink to="/dashboard/temas" className="sidebar-link">
+            <i className="fas fa-bullseye"></i>
+            <span>Meus Temas</span>
+          </NavLink>
+        )}
 
         <NavLink to="/dashboard/ranking" className="sidebar-link">
           <i className="fas fa-trophy"></i>
           <span>Ranking</span>
         </NavLink>
 
-        <NavLink to="/dashboard/salas" className="sidebar-link">
-          <i className="fas fa-users"></i>
-          <span>Salas</span>
+        {ehProfessor && (
+          <NavLink to="/dashboard/salas" className="sidebar-link">
+            <i className="fas fa-users"></i>
+            <span>Salas</span>
+          </NavLink>
+        )}
+
+        <NavLink to="/dashboard/entrar-sala" className="sidebar-link">
+          <i className="fas fa-gamepad"></i>
+          <span>Entrar em Sala</span>
         </NavLink>
 
         <NavLink to="/dashboard/personagem" className="sidebar-link">

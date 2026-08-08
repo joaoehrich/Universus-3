@@ -1,0 +1,324 @@
+/* src/styles/partida.css
+   Estilos da partida ao vivo. Segue o mesmo vocabulario visual do resto
+   do app: painel de vidro sobre o fundo estrelado, raio 20px, roxo
+   #7C3AED como cor principal. */
+
+/* ---------- Painel de vidro ---------- */
+
+.partida-painel {
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 20px;
+    backdrop-filter: blur(18px);
+}
+
+.partida-painel-forte {
+    background: rgba(15, 18, 45, .55);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 20px;
+    backdrop-filter: blur(18px);
+}
+
+/* ---------- Codigo da sala ---------- */
+
+.partida-codigo {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: .18em;
+    line-height: 1.1;
+    background: linear-gradient(120deg, #A78BFA, #7C3AED 45%, #EC4899);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 60px rgba(124, 58, 237, .45);
+}
+
+.partida-codigo-caixa {
+    border: 1px dashed rgba(167, 139, 250, .45);
+    border-radius: 20px;
+    padding: 22px 28px;
+    background: rgba(124, 58, 237, .08);
+}
+
+/* ---------- Barra de tempo ---------- */
+
+.partida-tempo {
+    height: 14px;
+    width: 100%;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .08);
+    overflow: hidden;
+}
+
+.partida-tempo-preenchimento {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #10B981, #F59E0B 65%, #EF4444);
+    transition: width .25s linear;
+}
+
+.partida-tempo-critico {
+    animation: partida-pulsar .7s ease-in-out infinite;
+}
+
+@keyframes partida-pulsar {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .45;
+    }
+}
+
+/* ---------- Alternativas ---------- */
+
+.partida-alternativa {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    min-height: 92px;
+    padding: 18px 22px;
+    border-radius: 18px;
+    color: #fff;
+    text-align: left;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border: 2px solid transparent;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease;
+}
+
+.partida-alternativa:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, .45);
+}
+
+.partida-alternativa:disabled {
+    cursor: default;
+}
+
+.partida-alternativa-letra {
+    flex: 0 0 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, .25);
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.partida-alternativa-escolhida {
+    border-color: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, .18);
+}
+
+.partida-alternativa-certa {
+    background: #10B981 !important;
+    border-color: #6EE7B7;
+    animation: partida-acerto .5s ease;
+}
+
+.partida-alternativa-errada {
+    opacity: .35;
+    filter: grayscale(.5);
+}
+
+@keyframes partida-acerto {
+    0% {
+        transform: scale(1);
+    }
+
+    45% {
+        transform: scale(1.04);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* ---------- Combo / streak ---------- */
+
+.partida-combo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: .9rem;
+    background: linear-gradient(120deg, #F59E0B, #EC4899);
+    color: #fff;
+    box-shadow: 0 0 22px rgba(236, 72, 153, .45);
+}
+
+.partida-combo-frio {
+    background: rgba(255, 255, 255, .08);
+    color: rgba(255, 255, 255, .6);
+    box-shadow: none;
+}
+
+/* ---------- Jogadores no lobby ---------- */
+
+.partida-jogador {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(124, 58, 237, .18);
+    border: 1px solid rgba(167, 139, 250, .35);
+    font-weight: 600;
+    animation: partida-entrada .35s ease;
+}
+
+@keyframes partida-entrada {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ---------- Placar ---------- */
+
+.partida-placar-linha {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .04);
+    transition: background .2s ease;
+}
+
+.partida-placar-linha + .partida-placar-linha {
+    margin-top: 8px;
+}
+
+.partida-placar-eu {
+    background: rgba(124, 58, 237, .28);
+    border: 1px solid rgba(167, 139, 250, .45);
+}
+
+.partida-placar-posicao {
+    flex: 0 0 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, .3);
+    font-weight: 800;
+}
+
+/* ---------- Barra de XP ---------- */
+
+.partida-xp {
+    height: 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .08);
+    overflow: hidden;
+}
+
+.partida-xp-preenchimento {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #7C3AED, #EC4899);
+    transition: width 1.2s cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ---------- Numeros grandes ---------- */
+
+.partida-numerao {
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    font-weight: 900;
+    line-height: 1;
+}
+
+.partida-pontos-ganhos {
+    animation: partida-subir .6s ease;
+}
+
+@keyframes partida-subir {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ---------- Campo de codigo ---------- */
+
+.partida-campo-codigo {
+    width: 100%;
+    max-width: 420px;
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .18);
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: .35em;
+    text-align: center;
+    text-transform: uppercase;
+    outline: none;
+}
+
+.partida-campo-codigo::placeholder {
+    letter-spacing: .2em;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .3);
+}
+
+.partida-campo-codigo:focus {
+    border-color: rgba(167, 139, 250, .7);
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, .25);
+}
+
+/* ---------- Botoes ---------- */
+
+.partida-botao {
+    padding: 14px 28px;
+    border-radius: 14px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(120deg, #7C3AED, #5B21B6);
+    box-shadow: 0 10px 26px rgba(124, 58, 237, .35);
+    transition: transform .15s ease, opacity .15s ease;
+}
+
+.partida-botao:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.partida-botao:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.partida-botao-claro {
+    background: rgba(255, 255, 255, .1);
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .partida-alternativa {
+        min-height: 76px;
+        font-size: .98rem;
+        padding: 14px 16px;
+    }
+}
