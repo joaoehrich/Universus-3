@@ -5,75 +5,63 @@
 // O historico nasce de sala_jogadores, nao de quiz_attempts: quiz_attempts
 // guarda o placar final mas nao guarda de qual sala veio, entao nao daria
 // para abrir o detalhe pergunta a pergunta a partir dele.
+//
+// A colocacao em cada partida agora vem de window function no banco
+// (meu_historico). Antes eram duas queries por tela - uma para as
+// partidas do aluno e outra para os pontos de todo mundo que jogou
+// aquelas salas - so para descobrir em que lugar ele ficou.
 
 import { supabase } from "./supabaseClient";
 
-// Uma linha por partida jogada, da mais recente para a mais antiga, ja com
-// a colocacao do aluno naquela sala.
-export async function meuHistorico(perfilId) {
-  if (!perfilId) return [];
-
-  const { data, error } = await supabase
-    .from("sala_jogadores")
-    .select(
-      "id, sala_id, pontos, acertos, melhor_streak, entrou_em, " +
-        "salas(codigo, estado, total_perguntas, created_at, " +
-        "quizzes(title, category, difficulty))"
-    )
-    .eq("player_id", perfilId)
-    .order("entrou_em", { ascending: false });
+async function chamar(nome, parametros) {
+  const { data, error } = await supabase.rpc(nome, parametros);
 
   if (error) throw new Error(error.message);
 
-  const partidas = data ?? [];
-
-  if (partidas.length === 0) return [];
-
-  // A colocacao depende dos pontos de todo mundo que jogou as mesmas salas.
-  const { data: todos, error: erroTodos } = await supabase
-    .from("sala_jogadores")
-    .select("sala_id, player_id, pontos")
-    .in(
-      "sala_id",
-      partidas.map((partida) => partida.sala_id)
-    );
-
-  if (erroTodos) throw new Error(erroTodos.message);
-
-  return partidas.map((partida) => {
-    const daSala = (todos ?? [])
-      .filter((jogador) => jogador.sala_id === partida.sala_id)
-      .sort((a, b) => b.pontos - a.pontos);
-
-    return {
-      ...partida,
-      colocacao: daSala.findIndex((jogador) => jogador.player_id === perfilId) + 1,
-      participantes: daSala.length,
-    };
-  });
+  return data;
 }
 
-// Totais para a faixa de resumo. Sai do proprio historico para nao bater no
-// banco de novo.
+// Uma linha por partida jogada, da mais recente para a mais antiga, ja
+// com colocacao, participantes e aproveitamento.
+//
+// perfilId nao vai para o banco: a RPC usa auth.uid(). O parametro
+// continua na assinatura porque a tela ja o tem em maos e ele evita a
+// chamada enquanto o perfil ainda esta carregando.
+export async function meuHistorico(perfilId) {
+  if (!perfilId) return [];
+
+  return (await chamar("meu_historico", { p_limite: 100 })) ?? [];
+}
+
+// Totais para a faixa de resumo. Sai do proprio historico para nao bater
+// no banco de novo.
 export function resumoDoHistorico(historico) {
-  const perguntas = historico.reduce(
-    (total, partida) => total + (partida.salas?.total_perguntas ?? 0),
+  const partidas = historico ?? [];
+
+  const perguntas = partidas.reduce(
+    (total, partida) => total + (partida.total_perguntas ?? 0),
     0
   );
 
-  const acertos = historico.reduce(
+  const acertos = partidas.reduce(
     (total, partida) => total + (partida.acertos ?? 0),
     0
   );
 
   return {
-    partidas: historico.length,
-    pontos: historico.reduce((total, partida) => total + (partida.pontos ?? 0), 0),
-    melhorStreak: historico.reduce(
+    partidas: partidas.length,
+    pontos: partidas.reduce((total, partida) => total + (partida.pontos ?? 0), 0),
+    melhorStreak: partidas.reduce(
       (maior, partida) => Math.max(maior, partida.melhor_streak ?? 0),
       0
     ),
-    aproveitamento: perguntas > 0 ? Math.round((acertos / perguntas) * 100) : null,
+    aproveitamento: perguntas > 0 ? Math.round((acertos / perguntas) * 100) : 0,
+    acertos,
+    perguntas,
+    vitorias: partidas.filter((partida) => partida.colocacao === 1).length,
+    podios: partidas.filter(
+      (partida) => partida.colocacao > 0 && partida.colocacao <= 3
+    ).length,
   };
 }
 
@@ -95,7 +83,7 @@ export async function meuDetalhePartida(salaId, perfilId) {
     .from("salas")
     .select(
       "id, codigo, estado, total_perguntas, created_at, " +
-        "quizzes(title, category, difficulty)"
+        "quizzes(title, category, subcategoria, difficulty)"
     )
     .eq("id", salaId)
     .single();
@@ -112,7 +100,7 @@ export async function meuDetalhePartida(salaId, perfilId) {
     .from("sala_respostas")
     .select(
       "pergunta_index, alternativa_id, correta, tempo_ms, pontos, " +
-        "perguntas(id, enunciado, explicacao, categoria)"
+        "perguntas(id, enunciado, explicacao, categoria, subcategoria)"
     )
     .eq("jogador_id", jogador.id)
     .order("pergunta_index", { ascending: true });
@@ -151,6 +139,9 @@ export async function meuDetalhePartida(salaId, perfilId) {
         indice: resposta.pergunta_index,
         enunciado: resposta.perguntas?.enunciado ?? "",
         explicacao: resposta.perguntas?.explicacao ?? "",
+        categoria: resposta.perguntas?.categoria ?? sala.quizzes?.category ?? "",
+        subcategoria:
+          resposta.perguntas?.subcategoria ?? sala.quizzes?.subcategoria ?? null,
         acertou: resposta.correta,
         tempoMs: resposta.tempo_ms ?? 0,
         pontos: resposta.pontos ?? 0,
@@ -165,53 +156,23 @@ export async function meuDetalhePartida(salaId, perfilId) {
   };
 }
 
-// Aproveitamento agrupado por tema. Nao existe tabela de temas: o tema vem
-// de perguntas.categoria, com o category do quiz como reserva.
+// Aproveitamento agrupado por materia e subcategoria, pior primeiro: o
+// que o aluno precisa estudar aparece no topo. O tema vem de
+// perguntas.categoria/subcategoria, com o quiz como reserva quando a
+// pergunta e antiga e nao tem tema proprio.
 export async function meuDesempenhoPorTema(perfilId) {
   if (!perfilId) return [];
 
-  const { data: jogadores, error: erroJogadores } = await supabase
-    .from("sala_jogadores")
-    .select("id")
-    .eq("player_id", perfilId);
+  const linhas = (await chamar("meu_desempenho_temas")) ?? [];
 
-  if (erroJogadores) throw new Error(erroJogadores.message);
-
-  const ids = (jogadores ?? []).map((jogador) => jogador.id);
-
-  if (ids.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from("sala_respostas")
-    .select("correta, perguntas(categoria), salas(quizzes(category))")
-    .in("jogador_id", ids);
-
-  if (error) throw new Error(error.message);
-
-  const porTema = new Map();
-
-  for (const resposta of data ?? []) {
-    const tema =
-      resposta.perguntas?.categoria?.trim() ||
-      resposta.salas?.quizzes?.category?.trim() ||
-      "Sem tema";
-
-    const atual = porTema.get(tema) ?? { tema, respondidas: 0, acertos: 0 };
-
-    atual.respondidas += 1;
-
-    if (resposta.correta) atual.acertos += 1;
-
-    porTema.set(tema, atual);
-  }
-
-  // Pior aproveitamento primeiro: o que o aluno precisa estudar vem no topo.
-  return [...porTema.values()]
-    .map((item) => ({
-      ...item,
-      aproveitamento: Math.round((item.acertos / item.respondidas) * 100),
-    }))
-    .sort((a, b) => a.aproveitamento - b.aproveitamento);
+  // `tema` e o rotulo pronto para a tela e mantem compatibilidade com a
+  // versao antiga desta funcao, que so devolvia a categoria.
+  return linhas.map((linha) => ({
+    ...linha,
+    tema: linha.subcategoria
+      ? `${linha.categoria} · ${linha.subcategoria}`
+      : linha.categoria,
+  }));
 }
 
 // --- Formatacao usada pelas telas de relatorio -------------------------

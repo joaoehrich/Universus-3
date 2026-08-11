@@ -23,7 +23,7 @@ function MeusJogosPage() {
       const { data, error } = await supabase
         .from("quizzes")
         .select(
-          "id, title, description, category, difficulty, qtd_perguntas, access_code, visibilidade, created_at"
+          "id, title, description, category, subcategoria, difficulty, qtd_perguntas, access_code, visibilidade, created_at"
         )
         .eq("creator_id", perfil.id)
         .order("created_at", { ascending: false });
@@ -156,6 +156,20 @@ function MeusJogosPage() {
                         : "Privado"}
                     </span>
                   </div>
+
+                  {/* A subcategoria e o assunto dentro da materia: aparece
+                      como selo para o professor achar o quiz de relance. */}
+                  {quiz.subcategoria && (
+                    <span
+                      className="badge mb-2 align-self-start"
+                      style={{
+                        background: "rgba(167,139,250,.22)",
+                        color: "#A78BFA",
+                      }}
+                    >
+                      {quiz.subcategoria}
+                    </span>
+                  )}
 
                   {quiz.description && (
                     <p className="text-light small mb-3">

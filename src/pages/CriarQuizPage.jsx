@@ -1,10 +1,19 @@
 // src/pages/CriarQuizPage.jsx
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import UploadPdf from "../components/UploadPdf";
 import { supabase } from "../lib/supabaseClient";
+import { MATERIAS, catalogoCategorias } from "../lib/ranking";
+import {
+  subcategoriasDaCategoria,
+  unirCategorias,
+} from "../components/ui/formato";
 
 const LIMITE_PERGUNTAS = 10;
+
+// Um <datalist> so: as sugestoes mudam com a materia escolhida, e todas as
+// perguntas do quiz pertencem a mesma materia.
+const LISTA_SUBCATEGORIAS = "sugestoes-subcategoria";
 
 // A, B, C, D, E. O banco guarda alternativas como linhas, então o número
 // aqui é só o teto do formulário; as que ficarem em branco são descartadas
@@ -21,28 +30,69 @@ function perguntaEmBranco() {
     // escolher. Sem resposta, o salvamento avisa em vez de aceitar calado.
     alternativas: Array(MAX_ALTERNATIVAS).fill(""),
     correta: null,
+    // Vazia = a pergunta herda a subcategoria do quiz.
+    subcategoria: "",
   };
 }
+
+const QUIZ_EM_BRANCO = {
+  titulo: "",
+  categoria: "",
+  subcategoria: "",
+  descricao: "",
+  dificuldade: "Fácil",
+  tempo: 30,
+  visibilidade: "privado",
+};
 
 function CriarQuizPage() {
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
   const [salvando, setSalvando] = useState(false);
 
-  const [quiz, setQuiz] = useState({
-    titulo: "",
-    categoria: "",
-    subcategoria: "",
-    dificuldade: "Fácil",
-    tempo: 30,
-    visibilidade: "privado",
-  });
+  const [quiz, setQuiz] = useState(QUIZ_EM_BRANCO);
 
   const [perguntas, setPerguntas] = useState([perguntaEmBranco()]);
+
+  // Catalogo do que ja existe no sistema, para sugerir subcategorias que
+  // outros professores usaram em vez de cada um inventar a sua.
+  const [catalogo, setCatalogo] = useState([]);
+
+  useEffect(() => {
+    let ativo = true;
+
+    catalogoCategorias()
+      .then((dados) => {
+        if (ativo) setCatalogo(dados ?? []);
+      })
+      .catch(() => {
+        // Sem catalogo o formulário continua funcionando com as sugestões
+        // fixas de MATERIAS: não vale travar a tela por causa disso.
+        if (ativo) setCatalogo([]);
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const categorias = unirCategorias(catalogo, MATERIAS);
+
+  const sugestoesSubcategoria = subcategoriasDaCategoria(
+    quiz.categoria,
+    catalogo,
+    MATERIAS
+  );
 
   function atualizarPergunta(index, valor) {
     const lista = [...perguntas];
     lista[index].pergunta = valor;
+    setPerguntas(lista);
+  }
+
+  function atualizarSubcategoriaDaPergunta(index, valor) {
+    const lista = [...perguntas];
+    lista[index].subcategoria = valor;
     setPerguntas(lista);
   }
 
@@ -107,6 +157,8 @@ function CriarQuizPage() {
         pergunta: item.pergunta.trim(),
         alternativas,
         correta,
+        // Sem subcategoria propria, o back-end herda a do quiz.
+        subcategoria: item.subcategoria?.trim() || null,
       });
     });
 
@@ -138,6 +190,7 @@ function CriarQuizPage() {
           pergunta: questao.pergunta,
           alternativas,
           correta: questao.correta,
+          subcategoria: "",
         };
       }),
     ]);
@@ -203,8 +256,11 @@ function CriarQuizPage() {
         p_dificuldade: quiz.dificuldade,
         p_tempo: quiz.tempo,
         p_perguntas: prontas,
-        p_descricao: quiz.subcategoria,
+        // Descricao e subcategoria sao campos diferentes: antes a
+        // subcategoria era enviada como descricao e sequestrava o campo.
+        p_descricao: quiz.descricao.trim() || null,
         p_visibilidade: quiz.visibilidade,
+        p_subcategoria: quiz.subcategoria.trim() || null,
       });
 
       if (error) throw error;
@@ -215,14 +271,7 @@ function CriarQuizPage() {
         `Quiz salvo! Código de acesso: ${criado?.access_code ?? "-"}`
       );
 
-      setQuiz({
-        titulo: "",
-        categoria: "",
-        subcategoria: "",
-        dificuldade: "Fácil",
-        tempo: 30,
-        visibilidade: "privado",
-      });
+      setQuiz(QUIZ_EM_BRANCO);
 
       setPerguntas([perguntaEmBranco()]);
     } catch (err) {
@@ -296,35 +345,80 @@ function CriarQuizPage() {
                       }}
                       value={quiz.categoria}
                       onChange={(e) =>
+                        // Trocar a matéria limpa a subcategoria: senão sobra
+                        // um par impossível, tipo "História · Potenciação".
                         setQuiz({
                           ...quiz,
                           categoria: e.target.value,
+                          subcategoria: "",
                         })
                       }
                     >
                       <option value="">
                         Selecione
                       </option>
-                      <option>Matemática</option>
-                      <option>Português</option>
-                      <option>História</option>
-                      <option>Geografia</option>
-                      <option>Ciências</option>
+
+                      {categorias.map((nome) => (
+                        <option key={nome} value={nome}>
+                          {nome}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">
+                    <label className="form-label" htmlFor="quiz-subcategoria">
                       Subcategoria
                     </label>
 
+                    {/* input + datalist: sugere o que já existe, mas deixa o
+                        professor cadastrar um assunto novo. */}
                     <input
+                      id="quiz-subcategoria"
                       className="form-control"
+                      list={LISTA_SUBCATEGORIAS}
+                      placeholder={
+                        quiz.categoria
+                          ? "Ex.: Potenciação"
+                          : "Escolha a categoria primeiro"
+                      }
+                      disabled={!quiz.categoria}
                       value={quiz.subcategoria}
                       onChange={(e) =>
                         setQuiz({
                           ...quiz,
                           subcategoria: e.target.value,
+                        })
+                      }
+                    />
+
+                    <datalist id={LISTA_SUBCATEGORIAS}>
+                      {sugestoesSubcategoria.map((nome) => (
+                        <option key={nome} value={nome} />
+                      ))}
+                    </datalist>
+
+                    <div className="form-text text-light">
+                      O assunto dentro da matéria. É por ele que o ranking e os
+                      relatórios separam o desempenho.
+                    </div>
+                  </div>
+
+                  <div className="col-12">
+                    <label className="form-label" htmlFor="quiz-descricao">
+                      Descrição <span className="text-light">(opcional)</span>
+                    </label>
+
+                    <textarea
+                      id="quiz-descricao"
+                      className="form-control"
+                      rows={2}
+                      placeholder="Uma linha explicando do que se trata o quiz."
+                      value={quiz.descricao}
+                      onChange={(e) =>
+                        setQuiz({
+                          ...quiz,
+                          descricao: e.target.value,
                         })
                       }
                     />
@@ -458,6 +552,26 @@ function CriarQuizPage() {
                         value={item.pergunta}
                         onChange={(e) =>
                           atualizarPergunta(
+                            indice,
+                            e.target.value
+                          )
+                        }
+                      />
+
+                      {/* Um quiz de Matemática pode misturar assuntos: aqui a
+                          pergunta pode ter o seu. Em branco, herda a do quiz. */}
+                      <input
+                        className="form-control form-control-sm mb-3"
+                        list={LISTA_SUBCATEGORIAS}
+                        aria-label={`Subcategoria da pergunta ${indice + 1}`}
+                        placeholder={
+                          quiz.subcategoria
+                            ? `Subcategoria (opcional — herda "${quiz.subcategoria}")`
+                            : "Subcategoria da pergunta (opcional)"
+                        }
+                        value={item.subcategoria}
+                        onChange={(e) =>
+                          atualizarSubcategoriaDaPergunta(
                             indice,
                             e.target.value
                           )

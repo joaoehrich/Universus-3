@@ -17,6 +17,7 @@ import CriarQuizPage from "./pages/CriarQuizPage";
 import PesquisaPage from "./pages/PesquisaPage";
 import ResultadosPage from "./pages/ResultadosPage";
 import DetalhePartidaPage from "./pages/DetalhePartidaPage";
+import DetalheSalaProfessorPage from "./pages/DetalheSalaProfessorPage";
 import TemasPage from "./pages/TemasPage";
 import RankingPage from "./pages/RankingPage";
 import SalasPage from "./pages/SalasPage";
@@ -82,7 +83,18 @@ export const router = createBrowserRouter([
         element: <ResultadosPage />,
       },
 
-      // Respostas de uma partida, pergunta a pergunta
+      // Detalhe da sala para o professor. Precisa vir ANTES de
+      // "resultados/:salaId", senão o parâmetro engole o "turma".
+      {
+        path: "resultados/turma/:salaId",
+        element: (
+          <RotaProtegida papel="professor">
+            <DetalheSalaProfessorPage />
+          </RotaProtegida>
+        ),
+      },
+
+      // Respostas de uma partida, pergunta a pergunta (aluno)
       {
         path: "resultados/:salaId",
         element: <DetalhePartidaPage />,

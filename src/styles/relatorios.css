@@ -1,0 +1,152 @@
+/* src/styles/relatorios.css
+ *
+ * Só o que o Bootstrap não resolve nas telas de ranking e relatórios:
+ * o pódio (ordem visual 2º-1º-3º), a faixa fixa "sua posição" e detalhes
+ * de tabela/gráfico.
+ */
+
+/* --- Pódio ------------------------------------------------------------ */
+
+.podio {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.podio-lugar {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 20px 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Cada lugar ganha um brilho da própria cor no topo do card. */
+.podio-lugar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--brilho, rgba(255, 255, 255, 0.2));
+}
+
+.podio-lugar-1 {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: linear-gradient(
+    180deg,
+    rgba(245, 158, 11, 0.12),
+    rgba(255, 255, 255, 0.03) 60%
+  );
+}
+
+.podio-medalha {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.podio-lugar-1 .podio-medalha {
+  font-size: 2.6rem;
+}
+
+@media (min-width: 768px) {
+  .podio {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .podio-lugar {
+    flex: 1 1 0;
+    max-width: 300px;
+  }
+
+  /* Ordem visual de pódio de verdade: 2º à esquerda, 1º no meio e maior. */
+  .podio-lugar-2 {
+    order: 1;
+  }
+
+  .podio-lugar-1 {
+    order: 2;
+    padding: 32px 20px;
+    transform: scale(1.04);
+  }
+
+  .podio-lugar-3 {
+    order: 3;
+  }
+}
+
+/* --- Faixa "sua posição" --------------------------------------------- */
+
+.faixa-voce {
+  background: linear-gradient(
+    90deg,
+    rgba(124, 58, 237, 0.28),
+    rgba(124, 58, 237, 0.08)
+  );
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  border-radius: 20px;
+}
+
+/* Linha do próprio usuário dentro da tabela do ranking. */
+.linha-voce > td {
+  background: rgba(124, 58, 237, 0.22) !important;
+}
+
+/* Bootstrap não tem utilitário de min-width: sem isso o text-truncate
+ * dentro de flex nunca corta e o nome empurra a linha inteira. */
+.min-w-0 {
+  min-width: 0;
+}
+
+/* --- Tabelas ---------------------------------------------------------- */
+
+.tabela-relatorio {
+  --bs-table-bg: transparent;
+  margin-bottom: 0;
+}
+
+.tabela-relatorio thead th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tabela-relatorio tbody tr:hover > td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Recarregar com filtro novo não pode piscar a tela: só esmaece o conteúdo. */
+.conteudo-atualizando {
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+/* --- Distribuição de alternativas (detalhe da sala do professor) ------ */
+
+.alternativa-linha {
+  position: relative;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.alternativa-preenchimento {
+  position: absolute;
+  inset: 0 auto 0 0;
+  transition: width 0.4s ease;
+}
+
+.alternativa-conteudo {
+  position: relative;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

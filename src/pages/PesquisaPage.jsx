@@ -36,7 +36,7 @@ function PesquisaPage() {
         let consulta = supabase
           .from("quizzes")
           .select(
-            "id, title, description, category, difficulty, qtd_perguntas, access_code, profiles(name)"
+            "id, title, description, category, subcategoria, difficulty, qtd_perguntas, access_code, profiles(name)"
           )
           .eq("visibilidade", "publico")
           .order("created_at", { ascending: false })
@@ -136,6 +136,21 @@ function PesquisaPage() {
                     <i className="fas fa-question-circle fa-4x mb-4"></i>
 
                     <h3>{quiz.title}</h3>
+
+                    {/* Matéria · assunto ajuda a escolher o quiz certo antes
+                        de abrir a sala. */}
+                    <p className="small mb-2">
+                      <span
+                        className="badge"
+                        style={{
+                          background: "rgba(0,0,0,.25)",
+                          color: "#fff",
+                        }}
+                      >
+                        {quiz.category}
+                        {quiz.subcategoria ? ` · ${quiz.subcategoria}` : ""}
+                      </span>
+                    </p>
 
                     <p className="mb-1">
                       {quiz.description || `Quiz de ${quiz.category}`}
